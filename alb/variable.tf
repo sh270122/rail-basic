@@ -9,3 +9,4 @@ variable "subnet1" {}
 variable "subnet2" {}
 
 variable "alb_sg" {}
+variable "certificate_arn" {}

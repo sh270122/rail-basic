@@ -32,9 +32,29 @@ resource "aws_lb_listener" "rails-poc-alb-listner" {
   port              = 80
   protocol          = "HTTP"
 
+  # default_action {
+  #   type             = "forward"
+  #   target_group_arn = "${aws_lb_target_group.rails-poc-target-group.arn}"
+  # }
   default_action {
-    type             = "forward"
-    target_group_arn = "${aws_lb_target_group.rails-poc-target-group.arn}"
+    type = "redirect"
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+    }
+  }
+
+}
+
+resource "aws_alb_listener" "https_with_ssl" {
+  load_balancer_arn = aws_lb.rails-poc-aws-alb.arn
+  port              = "443"
+  protocol          = "HTTPS"
+  certificate_arn   = var.certificate_arn
+  default_action {
+    type = "forward"
+    target_group_arn = aws_lb_target_group.rails-poc-target-group.arn
   }
 }
 

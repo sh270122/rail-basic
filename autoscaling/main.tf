@@ -19,12 +19,12 @@ resource "aws_launch_configuration" "rails-lc" {
 
 
 resource "aws_iam_instance_profile" "test_profile" {
-  name = "test_profile"
+  name = "rail_profile"
   role = aws_iam_role.ecs-instance-role.name
 }
 
 resource "aws_iam_role" "ecs-instance-role" {
-  name = "ecs-instance-role-web"
+  name = "ecs-instance-role"
   path = "/"
 
   assume_role_policy = <<EOF

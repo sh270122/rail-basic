@@ -25,6 +25,7 @@ module "alb" {
   subnet1        = "${module.vpc.subnet1}"
   subnet2        = "${module.vpc.subnet2}"
   alb_sg         = "${module.securitygroups.alb_sg}"
+  certificate_arn ="arn:aws:acm:us-east-1:561866774576:certificate/fddc3992-9840-4967-87fc-5d29c7723e87"
 }
 
 module "autoscaling" {
@@ -41,14 +42,21 @@ module "autoscaling" {
   private-sub2        = "${module.vpc.private_subnet2}"
 }
 
-# module "ecs" {
-#   source            = "./ecs"
-#   depends_on        =  [module.autoscaling]
-#   cluster_name      = "rails-cluster"
-#   container_port    = 80
-#   image_name        = "pa1kilaparthi/ruby:alb"
-#   tg_arn            = "${module.alb.alb_target_group_arn}"
-# }
+  module "ecs" {
+   source            = "./ecs"
+   depends_on        =  [module.autoscaling]
+   cluster_name      = "rails-cluster"
+   container_port    = 80
+   image_name        = "561866774576.dkr.ecr.us-east-1.amazonaws.com/rail-poc:latest"
+   tg_arn            = "${module.alb.alb_target_group_arn}"
+ }
+
+ module "route53" {
+  source            = "./route53"
+  zone_id ="Z35SXDOTRQ7X7K"
+  alb_name ="${module.alb.alb_dns_name}"
+  zone-id="Z03636692NNBFJH1EUACN"
+ }
 
 /*
 module ecsAutoscaling{
