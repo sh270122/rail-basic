@@ -1,0 +1,94 @@
+
+Conversation opened. 2 messages. All messages read.
+
+Skip to content
+Using Gmail with screen readers
+28 of 15,437
+ecs-task-def.yml
+Inbox
+
+Shiladitya Das Sharma
+Sep 15, 2022, 10:30 AM (1 day ago)
+containerDefinitions: - cpu: 256 secrets: - name: DB_PASSWORD valueFrom: "arn:aws:ssm:us-east-1:311967341986:parameter/crypt/global_secrets/papertrail-stagevpc-
+
+pa1 kumar
+Sep 15, 2022, 12:06 PM (23 hours ago)
+to me
+
+resource "aws_ecs_task_definition" "task-definition" {
+  family                = "rails-passenger_stagevpc"
+  execution_role_arn    = "arn:aws:iam::311967341986:role/stagevpc-us-east-1-iam-task-exec-role"
+  task_role_arn         = "arn:aws:iam::311967341986:role/rails-passenger_stagevpc_ecs_task"
+  cpu = data.aws_ssm_parameter.task_cpu.value#1000
+  memory = data.aws_ssm_parameter.task_memeory.value#1600
+  container_definitions = jsonencode([
+   {
+      name      = rails-passenger
+      image     = 311967341986.dkr.ecr.us-east-1.amazonaws.com/papertrail/rails
+      cpu       = 512
+      #memoryReservation = 1024
+      memory = 3072 
+      essential = true
+      portMappings = [
+        {
+          containerPort = 3000
+        }
+      ],
+       command : [ "/srv/papertrail/script/docker_passenger" ],
+       secrets : [
+                {
+                    name: "DB_PASSWORD",
+                    valueFrom : "arn:aws:ssm:us-east-1:311967341986:parameter/crypt/global_secrets/papertrail-stagevpc-us-east-1/SL_PT_MYSQL_PASS"
+                }
+      ],
+       environment: [
+                {
+                    name: "DB_HOST",
+                    value : "10.184.118.202"
+                },
+                {
+                    name: "DB_USER",
+                    value: "papertrail"
+                },
+                {
+                    name: "PORT",
+                    value: "3000"
+                },
+                {
+                    name: "RACK_TIMEOUT_SERVICE_TIMEOUT",
+                    value: "120"
+                },
+                {
+                    name: "RAILS_ENV",
+                    value: "staging"
+                },
+                {
+                    name: "REDIS_URL",
+                    value: "redis://rails-stagevpc-redis.dxnhyo.0001.use1.cache.amazonaws.com:6379"
+                },
+                {
+                    name: "ZOOKEEPER_HOSTS",
+                    value: "172.29.156.18:2181,172.29.156.175:2181,172.29.157.111:2181"
+                }
+          ],
+    logConfiguration: {
+                "logDriver": "json-file",
+                "options": {
+                    "max-size": "1000m",
+                    "max-file": "5"
+            }
+        }
+    }
+  ])
+  network_mode          = "awsvpc"
+}
+
+resource "aws_ecs_service" "service" {
+  name            = "rails-passenger_stagevpc-us-east-1"
+  cluster         = "rails_stagevpc"
+  task_definition = aws_ecs_task_definition.task-definition.arn
+  desired_count   = "1"
+  health_check_grace_period_seconds = 60
+}
+
+
